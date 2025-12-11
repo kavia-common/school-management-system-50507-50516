@@ -5,13 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 # PUBLIC_INTERFACE
 def get_database_url() -> str:
-    """Returns the database URL from environment variables.
-    Requires POSTGRES_URL to be set in the environment (.env).
+    """Return the SQLAlchemy async database URL from environment variables.
+
+    Expects DATABASE_URL to be set in the environment (.env). Examples:
+      - DATABASE_URL=postgresql://user:pass@host:5432/dbname
+      - DATABASE_URL=postgres://user:pass@host:5432/dbname
+
+    The function will convert a synchronous Postgres URL to the asyncpg driver
+    (postgresql+asyncpg://) as required by SQLAlchemy async engines.
     """
-    # We expect POSTGRES_URL like postgresql://host:port/dbname — convert to asyncpg driver
-    raw = os.environ.get("POSTGRES_URL")
+    raw = os.environ.get("DATABASE_URL")
     if not raw:
-        raise RuntimeError("POSTGRES_URL environment variable is required")
+        raise RuntimeError("DATABASE_URL environment variable is required")
+    # Normalize common postgres schemes to asyncpg
     if raw.startswith("postgresql://"):
         return raw.replace("postgresql://", "postgresql+asyncpg://", 1)
     if raw.startswith("postgres://"):

@@ -35,14 +35,21 @@ app = FastAPI(
     ],
 )
 
-allowed_origins = os.environ.get(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,https://vscode-internal-15220-qa.qa01.cloud.kavia.ai:3000",
-).split(",")
+# CORS configuration
+# ALLOWED_ORIGINS is a comma-separated list of origins. Examples:
+#   ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:5173
+# If ALLOWED_ORIGINS is not set, default to "*" to simplify local dev, while still
+# providing an explicit list to CORSMiddleware to avoid wildcard with allow_credentials.
+raw_allowed = os.environ.get("ALLOWED_ORIGINS")
+if raw_allowed:
+    origins = [o.strip() for o in raw_allowed.split(",") if o.strip()]
+else:
+    # Dev-friendly default
+    origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in allowed_origins if o.strip()],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
